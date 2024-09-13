@@ -1,6 +1,5 @@
-// src/components/ArtworksTable.tsx
 import React, { useState, useEffect } from 'react';
-import { DataTable, DataTableSelectionChangeEvent } from 'primereact/datatable';
+import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { fetchArtworks } from '../services/api';
 
@@ -21,38 +20,41 @@ const ArtworksTable: React.FC = () => {
   const [first, setFirst] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Fetch artworks from the API based on the current page
+  // Load artworks data
   const loadArtworks = async (page: number) => {
     setLoading(true);
-    const data = await fetchArtworks(page);
-    setArtworks(data.data.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      place_of_origin: item.place_of_origin,
-      artist_display: item.artist_display,
-      inscriptions: item.inscriptions,
-      date_start: item.date_start,
-      date_end: item.date_end,
-    })));
-    setTotalRecords(data.pagination.total);
-    setLoading(false);
+    try {
+      const data = await fetchArtworks(page);
+      setArtworks(
+        data.data.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          place_of_origin: item.place_of_origin,
+          artist_display: item.artist_display,
+          inscriptions: item.inscriptions,
+          date_start: item.date_start,
+          date_end: item.date_end,
+        }))
+      );
+      setTotalRecords(data.pagination.total);
+    } catch (error) {
+      console.error('Failed to load artworks:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Handle page change in the DataTable
-  const onPageChange = (event: any) => {
+  const onPageChange = (event: { first: number; page: number }) => {
     setFirst(event.first);
-    const page = event.page + 1;
-    loadArtworks(page);
+    loadArtworks(event.page + 1);
   };
 
-  // Handle row selection
-  const onRowSelectChange = (e: DataTableSelectionChangeEvent) => {
-    const updatedSelection = e.value;
-    setSelectedArtworks(updatedSelection);
+  const onRowSelectChange = (e: { value: Artwork[] | Artwork | null }) => {
+    setSelectedArtworks(e.value || []);
   };
 
   useEffect(() => {
-    loadArtworks(1); 
+    loadArtworks(1);
   }, []);
 
   return (
