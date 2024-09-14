@@ -3,7 +3,6 @@ import axios from 'axios';
 
 const API_URL = 'https://api.artic.edu/api/v1/artworks';
 
-// Fetch artworks data with pagination
 export const fetchArtworks = async (page: number = 1) => {
   try {
     const response = await axios.get(`${API_URL}?page=${page}`);

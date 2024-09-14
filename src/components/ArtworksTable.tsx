@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTablePageEvent, DataTableSelectionChangeEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { fetchArtworks } from '../services/api';
 
@@ -13,6 +13,13 @@ interface Artwork {
   date_end: number;
 }
 
+interface ArtworkResponse {
+  data: Artwork[];
+  pagination: {
+    total: number;
+  };
+}
+
 const ArtworksTable: React.FC = () => {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -20,23 +27,12 @@ const ArtworksTable: React.FC = () => {
   const [first, setFirst] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Load artworks data
   const loadArtworks = async (page: number) => {
     setLoading(true);
     try {
-      const data = await fetchArtworks(page);
-      setArtworks(
-        data.data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          place_of_origin: item.place_of_origin,
-          artist_display: item.artist_display,
-          inscriptions: item.inscriptions,
-          date_start: item.date_start,
-          date_end: item.date_end,
-        }))
-      );
-      setTotalRecords(data.pagination.total);
+      const response: ArtworkResponse = await fetchArtworks(page);
+      setArtworks(response.data);
+      setTotalRecords(response.pagination.total);
     } catch (error) {
       console.error('Failed to load artworks:', error);
     } finally {
@@ -44,13 +40,14 @@ const ArtworksTable: React.FC = () => {
     }
   };
 
-  const onPageChange = (event: { first: number; page: number }) => {
+  const onPageChange = (event: DataTablePageEvent) => {
+    const page = Math.floor(event.first / event.rows) + 1; // Calculate page number
     setFirst(event.first);
-    loadArtworks(event.page + 1);
+    loadArtworks(page);
   };
 
-  const onRowSelectChange = (e: { value: Artwork[] | Artwork | null }) => {
-    setSelectedArtworks(e.value || []);
+  const onRowSelectChange = (e: DataTableSelectionChangeEvent<Artwork>) => {
+    setSelectedArtworks(Array.isArray(e.value) ? e.value : []);
   };
 
   useEffect(() => {
